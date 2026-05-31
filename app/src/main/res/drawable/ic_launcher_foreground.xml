@@ -12,11 +12,11 @@
             android:pathData="M8,4h32c2.2,0 4,1.8 4,4v32c0,2.2 -1.8,4 -4,4H8c-2.2,0 -4,-1.8 -4,-4V8C4,5.8 5.8,4 8,4z" />
         <!-- 弁当の中身の仕切り -->
         <path
-            android:fillColor="#FF6750A4"
+            android:fillColor="#FF4CAF50"
             android:pathData="M24,8h16v12H24z M24,24h16v16H24z M8,8h12v32H8z" />
         <!-- ご飯の上の梅干し的なアクセント -->
         <path
-            android:fillColor="#FFD0BCFF"
+            android:fillColor="#FFA5D6A7"
             android:pathData="M14,16m-2,0a2,2 0,1 1,4 0a2,2 0,1 1,-4 0" />
     </group>
 </vector>
