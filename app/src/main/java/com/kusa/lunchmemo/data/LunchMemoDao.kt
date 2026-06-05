@@ -16,4 +16,10 @@ interface LunchMemoDao {
 
     @Query("DELETE FROM lunch_memos WHERE date < :date")
     suspend fun deleteMemosOlderThan(date: String)
+
+    @Query("SELECT * FROM app_settings WHERE id = 0")
+    fun getSettings(): Flow<AppSettingsEntity?>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun saveSettings(settings: AppSettingsEntity)
 }

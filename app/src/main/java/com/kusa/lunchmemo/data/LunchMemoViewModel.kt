@@ -18,9 +18,29 @@ class LunchMemoViewModel(application: Application) : AndroidViewModel(applicatio
         list.associate { LocalDate.parse(it.date, formatter) to it.memo }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyMap())
 
+    val settings = dao.getSettings().stateIn(
+        viewModelScope,
+        SharingStarted.WhileSubscribed(5000),
+        AppSettingsEntity()
+    )
+
     fun saveMemo(date: LocalDate, memo: String) {
         viewModelScope.launch {
             dao.insertMemo(LunchMemoEntity(date.format(formatter), memo))
+        }
+    }
+
+    fun updateNotificationTime(hour: Int, minute: Int) {
+        viewModelScope.launch {
+            val current = settings.value ?: AppSettingsEntity()
+            dao.saveSettings(current.copy(notificationHour = hour, notificationMinute = minute))
+        }
+    }
+
+    fun updateAlphanumericOnly(enabled: Boolean) {
+        viewModelScope.launch {
+            val current = settings.value ?: AppSettingsEntity()
+            dao.saveSettings(current.copy(alphanumericOnly = enabled))
         }
     }
 
