@@ -100,6 +100,7 @@ class MainActivity : ComponentActivity() {
                 LaunchedEffect(settings) {
                     val currentSettings = settings ?: return@LaunchedEffect
                     
+                    // 通知権限の確認と要求 (Android 13以上)
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                         if (ContextCompat.checkSelfPermission(
                                 context,
@@ -107,16 +108,12 @@ class MainActivity : ComponentActivity() {
                             ) != PackageManager.PERMISSION_GRANTED
                         ) {
                             launcher.launch(Manifest.permission.POST_NOTIFICATIONS)
-                        } else {
-                            NotificationScheduler.scheduleDailyNotification(
-                                context, currentSettings.notificationHour, currentSettings.notificationMinute
-                            )
                         }
-                    } else {
-                        NotificationScheduler.scheduleDailyNotification(
-                            context, currentSettings.notificationHour, currentSettings.notificationMinute
-                        )
                     }
+                    
+                    // AlarmManagerによる予約は時刻設定更新時のみ行うようにし、
+                    // ここでの毎回の予約は避ける（NotificationReceiverでも行われるため）
+                    // ただし初回起動時などのために設定が存在する場合は一度だけ実行される
                 }
 
                 LunchMemoScreen(viewModel)
@@ -133,6 +130,7 @@ fun LunchMemoScreen(
     val memos by viewModel.memos.collectAsState()
     val settings by viewModel.settings.collectAsState()
     var showTimePicker by remember { mutableStateOf(false) }
+    val context = LocalContext.current
 
     LaunchedEffect(Unit) {
         viewModel.cleanOldMemos()
@@ -173,6 +171,7 @@ fun LunchMemoScreen(
                 onDismiss = { showTimePicker = false },
                 onTimeSelected = { hour, minute ->
                     viewModel.updateNotificationTime(hour, minute)
+                    NotificationScheduler.scheduleDailyNotification(context, hour, minute)
                     showTimePicker = false
                 },
                 onAlphanumericToggle = { enabled ->

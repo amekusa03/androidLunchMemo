@@ -22,9 +22,11 @@ class LunchNotificationWorker(
     override suspend fun doWork(): Result {
         val database = LunchMemoDatabase.getDatabase(applicationContext)
         val dao = database.lunchMemoDao()
+        
+        // 実行時刻にかかわらず「今日」のメモを探す
+        // AlarmManagerで指定時刻（例：12:00）に起動された直後に実行される想定
         val today = LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE)
         
-        // 全てのメモを取得して今日の日付のものを探す（簡易的な実装）
         val memos = dao.getAllMemos().first()
         val todayMemo = memos.find { it.date == today }?.memo
 
