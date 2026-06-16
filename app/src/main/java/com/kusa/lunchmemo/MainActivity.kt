@@ -26,6 +26,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ElevatedCard
@@ -57,6 +58,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -418,15 +420,18 @@ fun LunchMemoCard(
                         value = memo,
                         onValueChange = { newValue ->
                             if (alphanumericOnly) {
-                                // 英数字とスペースのみ許可
-                                if (newValue.all { it.isLetterOrDigit() || it.isWhitespace() }) {
-                                    onMemoChange(newValue)
-                                }
+                                // 記号や全角文字を完全に拒否するのではなく、有効な文字のみを抽出して反映させる
+                                // これによりIMEのComposition（未確定状態）を壊さずに入力が続けられる
+                                val filteredValue = newValue.filter { it.isLetterOrDigit() || it.isWhitespace() }
+                                onMemoChange(filteredValue)
                             } else {
                                 onMemoChange(newValue)
                             }
                         },
                         modifier = Modifier.fillMaxSize(),
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = if (alphanumericOnly) KeyboardType.Ascii else KeyboardType.Text
+                        ),
                         placeholder = { 
                             Text(
                                 "What's for lunch?",
