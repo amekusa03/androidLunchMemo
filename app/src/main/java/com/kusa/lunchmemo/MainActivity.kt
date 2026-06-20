@@ -59,6 +59,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -336,6 +337,15 @@ fun LunchMemoCard(
     onMemoChange: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    var textFieldValue by remember { mutableStateOf(TextFieldValue(memo)) }
+
+    // 外部（ViewModel/DB）からの変更を同期
+    LaunchedEffect(memo) {
+        if (textFieldValue.text != memo) {
+            textFieldValue = textFieldValue.copy(text = memo)
+        }
+    }
+
     val isToday = date == LocalDate.now()
     val monthFormatter = DateTimeFormatter.ofPattern("MMM", Locale.getDefault())
     val dayFormatter = DateTimeFormatter.ofPattern("d", Locale.getDefault())
@@ -417,16 +427,22 @@ fun LunchMemoCard(
             ) {
                 if (isEditable) {
                     OutlinedTextField(
-                        value = memo,
+                        value = textFieldValue,
                         onValueChange = { newValue ->
-                            if (alphanumericOnly) {
-                                // 記号や全角文字を完全に拒否するのではなく、有効な文字のみを抽出して反映させる
-                                // これによりIMEのComposition（未確定状態）を壊さずに入力が続けられる
-                                val filteredValue = newValue.filter { it.isLetterOrDigit() || it.isWhitespace() }
-                                onMemoChange(filteredValue)
+                            val filteredValue = if (alphanumericOnly) {
+                                val filteredText = newValue.text.filter { it.isLetterOrDigit() || it.isWhitespace() }
+                                if (filteredText != newValue.text) {
+                                    // 制限に抵触した場合は、制限後の文字で構成し直し
+                                    newValue.copy(text = filteredText, composition = null)
+                                } else {
+                                    newValue
+                                }
                             } else {
-                                onMemoChange(newValue)
+                                newValue
                             }
+                            
+                            textFieldValue = filteredValue
+                            onMemoChange(filteredValue.text)
                         },
                         modifier = Modifier.fillMaxSize(),
                         keyboardOptions = KeyboardOptions(
