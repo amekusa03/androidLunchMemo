@@ -30,14 +30,18 @@ object NotificationScheduler {
             set(Calendar.SECOND, 0)
             set(Calendar.MILLISECOND, 0)
             
-            // 設定時刻が現在時刻より前なら翌日に設定
-            if (before(Calendar.getInstance())) {
+            // 設定時刻が現在時刻以前（または直後すぎる場合）は翌日に設定
+            // 実行時のわずかなタイムラグで同日に再予約されるのを防ぐため、1分程度のバッファを持たせる
+            if (timeInMillis <= System.currentTimeMillis() + 1000) {
                 add(Calendar.DATE, 1)
             }
         }
+        android.util.Log.d("NotifScheduler", "Now       : ${java.util.Date(System.currentTimeMillis())}")
+        android.util.Log.d("NotifScheduler", "Scheduled : ${java.util.Date(calendar.timeInMillis)}")
+        android.util.Log.d("NotifScheduler", "TimeZone  : ${calendar.timeZone.id}")
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            // Android 12以上で正確なアラームの権限があるか確認（簡易化のため常に試行し、例外はOSに任せるか権限チェックを行うのが本来は望ましい）
+            // Android 12以上で正確なアラームの権限があるか確認
             if (alarmManager.canScheduleExactAlarms()) {
                 alarmManager.setExactAndAllowWhileIdle(
                     AlarmManager.RTC_WAKEUP,
@@ -45,7 +49,7 @@ object NotificationScheduler {
                     pendingIntent
                 )
             } else {
-                // 権限がない場合は不正確なアラームを使用
+                // 権限がない場合は不正確なアラームを使用。システムにより実行が遅れる可能性がある
                 alarmManager.setAndAllowWhileIdle(
                     AlarmManager.RTC_WAKEUP,
                     calendar.timeInMillis,
@@ -53,6 +57,7 @@ object NotificationScheduler {
                 )
             }
         } else {
+            // Android 12未満は常に正確なアラームを試行
             alarmManager.setExactAndAllowWhileIdle(
                 AlarmManager.RTC_WAKEUP,
                 calendar.timeInMillis,

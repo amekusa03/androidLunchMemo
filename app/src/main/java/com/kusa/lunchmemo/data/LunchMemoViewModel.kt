@@ -44,6 +44,19 @@ class LunchMemoViewModel(application: Application) : AndroidViewModel(applicatio
         }
     }
 
+    fun updateComponentConfig(index: Int, config: ComponentConfig) {
+        viewModelScope.launch {
+            val current = settings.value ?: AppSettingsEntity()
+            val updated = when (index) {
+                1 -> current.copy(component1ConfigJson = config.serialize())
+                2 -> current.copy(component2ConfigJson = config.serialize())
+                3 -> current.copy(component3ConfigJson = config.serialize())
+                else -> current
+            }
+            dao.saveSettings(updated)
+        }
+    }
+
     fun cleanOldMemos() {
         viewModelScope.launch {
             val yesterday = LocalDate.now().minusDays(1).format(formatter)
